@@ -5,10 +5,8 @@ Created on Thu Feb 21 13:55:25 2019
 @author: Angela
 """
 
-#import Bio #well I can't install Biopython so
-#import numpy as np
+#I silenced all the prints to screen that I didn't make because I thought they were annoying
 import os
-#import pandas as pd
 
 #make directory and change into it
 os.system("mkdir Angela_Andaleon")
@@ -21,7 +19,7 @@ strain_dict = {'HM27':'APNU00000000', 'HM46':'APNY00000000', 'HM65':'APNX0000000
 UPEC_log = open("UPEC.log", "w")
 for strain in strain_dict:
     print("Beginning analyses on " + strain + ".")
-    os.system("wget ftp://ftp.ncbi.nlm.nih.gov/sra/wgs_aux/AP/" + strain_dict[strain][2:4] + "/" + strain_dict[strain][0:4] + "01/" + strain_dict[strain][0:4] + "01.1.fsa_nt.gz") #retrieve contigs in fasta format
+    os.system("wget ftp://ftp.ncbi.nlm.nih.gov/sra/wgs_aux/AP/" + strain_dict[strain][2:4] + "/" + strain_dict[strain][0:4] + "01/" + strain_dict[strain][0:4] + "01.1.fsa_nt.gz  > /dev/null 2>&1") #retrieve contigs in fasta format
     os.system("gunzip " + strain_dict[strain][0:4] + "01.1.fsa_nt.gz") #idk if gzip is installed on here
     fastas = open(strain_dict[strain][0:4] + "01.1.fsa_nt").read().splitlines() #because np.loadtxt doesn't feel like working
     contigs = 0 #intitalize counts
@@ -35,7 +33,7 @@ for strain in strain_dict:
     print("Completed reporting number of contigs and bp.")
     
     #annotation w/ Prokka
-    UPEC_log.write("Prokka command: 'prokka " + strain_dict[strain][0:4] + "01.1.fsa_nt --outdir prokka_" + strain + " --prefix " + strain + " --genus Coli'") #write prokka command to log file
+    UPEC_log.write("Prokka command: 'prokka " + strain_dict[strain][0:4] + "01.1.fsa_nt --outdir prokka_" + strain + " --prefix " + strain + " --genus Coli'\n") #write prokka command to log file
     os.system("prokka " + strain_dict[strain][0:4] + "01.1.fsa_nt --outdir prokka_" + strain + " --prefix " + strain + " --genus Coli > /dev/null 2>&1") #prokka is too noisy
     anno = open("prokka_" + strain + "/" + strain + ".txt").read().splitlines()
     for line in anno: #write anno results
@@ -51,14 +49,18 @@ for strain in strain_dict:
     
     #write discrepancies
     if CDS >= 4140 and tRNA >= 89: #some weird conditionals to get the "more than" and "less than" correct in the print statements
-        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(tRNA - 89) + " more tRNA than the RefSeq in assembly " + strain + ".")
+        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(tRNA - 89) + " more tRNA than the RefSeq in assembly " + strain + ".\n")
     elif CDS <= 4140 and tRNA <= 89:
-        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(89 - tRNA) + " less tRNA than the RefSeq in assembly " + strain + ".")
+        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(89 - tRNA) + " less tRNA than the RefSeq in assembly " + strain + ".\n")
     elif CDS >= 4140 and tRNA <= 89:
-        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(89 - tRNA) + " less tRNA than the RefSeq in assembly " + strain + ".")
+        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(89 - tRNA) + " less tRNA than the RefSeq in assembly " + strain + ".\n")
     elif CDS <= 4140 and tRNA >= 89:
-        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(tRNA - 89) + " more tRNA than the RefSeq in assembly " + strain + ".")
+        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(tRNA - 89) + " more tRNA than the RefSeq in assembly " + strain + ".\n")
     print("Completed writing annotations and discrepancies from the reference genome.")
 
 
+
+    print("Finished writing analyses on strain " + strain + ".")
+
+UPEC_log.close()
     
