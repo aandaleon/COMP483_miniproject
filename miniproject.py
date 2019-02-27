@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Feb 21 13:55:25 2019
-
+#Comparison of genomes and gene expression of four strains of E. Coli
 @author: Angela
 """
 
-#I silenced all the prints to screen that I didn't make because I thought they were annoying
 import os
+import pandas as pd
 
 #make directory and change into it
 os.system("mkdir Angela_Andaleon")
@@ -62,13 +62,39 @@ for strain in strain_dict:
     os.system("wget ftp://ftp.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/" + strain_dict[strain][1][0:6] + "/" + strain_dict[strain][1] + "/" + strain_dict[strain][1] + ".sra > /dev/null 2>&1")
     os.system("fastq-dump -I --split-files " + strain_dict[strain][1] + ".sra") #get reads
     print("Retrived RNA-seq reads.")
-    
+
     #build index, map reads and quantify expression
     os.system("bowtie2-build prokka_" + strain + "/" + strain + ".fna " + strain) #build index
-    os.system("cp "+ strain_dict[strain][0][0:4] + "01.1.fsa_nt " + strain + ".fa")  #copy fasta into new name so tophat can find it
-    os.system("tophat2 -o tophat_" + strain + " " + strain + " " + strain_dict[strain][1] + "_1.fastq  " + strain_dict[strain][1] + "_2.fastq") #map reads
-        #quantify expression
+    print("Built index in bowtie.")
+    os.system("cp " + strain_dict[strain][0][0:4] + "01.1.fsa_nt " + strain + ".fa")  #copy fasta into new name so tophat can find it
+    #"The annotation for each genome's Prokka results should be used for the input"
+    os.system("tophat2 -o tophat_" + strain + " " + strain + " " + strain_dict[strain][1] + "_1.fastq " + strain_dict[strain][1] + "_2.fastq -p 5 --no-coverage-search") #map reads to transcriptome since we're concentrating on expression; also as of working on this Saturday afternoon only 8 cores are being used and it runs slow so (I am also spoiled after being used to 72 cores and 500 GB of RAM)
+    print("Mapped reads with TopHat")
+    
+    '''
+    FOR THE PERSON GRADING THIS:
+    The TopHat command above constantly gives the error
+    '[2019-02-23 22:17:47] Searching for junctions via segment mapping
+        [FAILED]
+    Error: segment-based junction search failed with err =-11
+    Which, with googling, is a memory error, which I cannot control on a shared machine. (let's see if --no-coverage-search helps)
+    Unfortunately, we will have to make do, so...
+    '''
+    
+    #sort mapped reads MODIFY IF TOPHAT DECIDES TO WORK
+    os.system("samtools sort tophat_" + strain + "/tmp/left_kept_reads.mapped.bam -o tophat_" + strain + "/left_sorted.bam")
+    os.system("samtools sort tophat_" + strain + "/tmp/right_kept_reads.mapped.bam -o tophat_" + strain + "/right_sorted.bam")
+    os.system("samtools merge tophat_" + strain + "/merged.bam tophat_" + strain + "/left_sorted.bam tophat_" + strain + "/right_sorted.bam")
+    print("Sorted and combined mapped reads with samtools.")
+    
+    #quantify expression MODIFY IF TOPHAT DECIDES TO WORK
+    os.system("cufflinks -o cufflinks_" + strain + " tophat_" + strain + "/merged.bam -p 5")
+    print("Quantified expression in cufflinks.")
     print("Finished writing analyses on strain " + strain + ".")
 
 UPEC_log.close()
-    
+
+#normalize transcriptomes to each other
+#DO THIS WEDNESDAY
+
+
