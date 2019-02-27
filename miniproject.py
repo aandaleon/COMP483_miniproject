@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Feb 21 13:55:25 2019
-#Comparison of genomes and gene expression of four strains of E. Coli
+#Comparison of genomes and gene expression of four strains of E. coli
 @author: Angela
 """
 
