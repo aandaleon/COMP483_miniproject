@@ -8,6 +8,8 @@ This repository can simply be used with the commands `git clone https://github.c
 * Python dependency `os`
 * Python dependency `pandas`
 * [Prokka](https://www.ncbi.nlm.nih.gov/pubmed/24642063) (1.13.3)
+* [SRA Toolkit](https://www.ncbi.nlm.nih.gov/books/NBK158900/) (2.8.2)
 * [Bowtie](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3334321/) (1.2.2)
 * [TopHat](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2672628/) (2.1.1)
+* [SAMtools](https://www.ncbi.nlm.nih.gov/pubmed/19505943) (1.7)
 * [Cufflinks](https://www.ncbi.nlm.nih.gov/pubmed/20436464) (2.2.1)
