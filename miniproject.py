@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Feb 21 13:55:25 2019
-#Comparison of genomes and gene expression of four strains of E. coli
+#Comparison of genomes and gene expression of four strains of E. Coli
 @author: Angela
 """
 
 import os
 import pandas as pd
+print("Running Angela Andaleon's COMP 483 mini-project, v1.0")
 
 #make directory and change into it
 os.system("mkdir Angela_Andaleon")
@@ -15,10 +16,10 @@ os.chdir("Angela_Andaleon")
 #get reference numbers for strains (is there a way to automate this?)
 strain_dict = {'HM27':('APNU00000000', 'SRR1278956'), 'HM46':('APNY00000000', 'SRR1278960'), 'HM65':('APNX00000000', 'SRR1283106'), 'HM69':('APNV00000000', 'SRR1278963')}
 
-#retrieve assemblies and count contigs & bp
 UPEC_log = open("UPEC.log", "w")
 for strain in strain_dict:
     print("Beginning analyses on " + strain + ".")
+    #retrieve assemblies and count contigs & bp
     os.system("wget ftp://ftp.ncbi.nlm.nih.gov/sra/wgs_aux/AP/" + strain_dict[strain][0][2:4] + "/" + strain_dict[strain][0][0:4] + "01/" + strain_dict[strain][0][0:4] + "01.1.fsa_nt.gz") #retrieve contigs in fasta format
     os.system("gunzip " + strain_dict[strain][0][0:4] + "01.1.fsa_nt.gz") #idk if gzip is installed on here
     fastas = open(strain_dict[strain][0][0:4] + "01.1.fsa_nt").read().splitlines() #because np.loadtxt doesn't feel like working
@@ -49,13 +50,13 @@ for strain in strain_dict:
     
     #write discrepancies of CDS & tRNA
     if CDS >= 4140 and tRNA >= 89: #some weird conditionals to get the "more than" and "less than" correct in the print statements
-        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(tRNA - 89) + " more tRNA than the RefSeq in assembly " + strain + ".\n")
+        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(tRNA - 89) + " more tRNA than E. coli K-12 in assembly " + strain + ".\n")
     elif CDS <= 4140 and tRNA <= 89:
-        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(89 - tRNA) + " less tRNA than the RefSeq in assembly " + strain + ".\n")
+        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(89 - tRNA) + " less tRNA than E. coli K-12 in assembly " + strain + ".\n")
     elif CDS >= 4140 and tRNA <= 89:
-        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(89 - tRNA) + " less tRNA than the RefSeq in assembly " + strain + ".\n")
+        UPEC_log.write("There are " + str(CDS - 4140) + " CDS more and " + str(89 - tRNA) + " less tRNA than E. coli K-12 in assembly " + strain + ".\n")
     elif CDS <= 4140 and tRNA >= 89:
-        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(tRNA - 89) + " more tRNA than the RefSeq in assembly " + strain + ".\n")
+        UPEC_log.write("There are " + str(4140 - CDS) + " CDS less and " + str(tRNA - 89) + " more tRNA than E. coli K-12 in assembly " + strain + ".\n")
     print("Wrote annotations and discrepancies from the reference genome.")
     
     #get transcriptome
@@ -77,7 +78,8 @@ for strain in strain_dict:
     '[2019-02-23 22:17:47] Searching for junctions via segment mapping
         [FAILED]
     Error: segment-based junction search failed with err =-11
-    Which, with googling, is a memory error, which I cannot control on a shared machine. (let's see if --no-coverage-search helps)
+    Which, with googling, is a memory error, which I cannot control on a shared machine.
+    Other people have run the exact same command I have and received a successful output so that's fun
     Unfortunately, we will have to make do, so...
     '''
     
@@ -85,16 +87,31 @@ for strain in strain_dict:
     os.system("samtools sort tophat_" + strain + "/tmp/left_kept_reads.mapped.bam -o tophat_" + strain + "/left_sorted.bam")
     os.system("samtools sort tophat_" + strain + "/tmp/right_kept_reads.mapped.bam -o tophat_" + strain + "/right_sorted.bam")
     os.system("samtools merge tophat_" + strain + "/merged.bam tophat_" + strain + "/left_sorted.bam tophat_" + strain + "/right_sorted.bam")
+    os.system("samtools sort tophat_" + strain + "/merged.bam -o tophat_" + strain + "/merged_sorted.bam")
     print("Sorted and combined mapped reads with samtools.")
     
     #quantify expression MODIFY IF TOPHAT DECIDES TO WORK
-    os.system("cufflinks -o cufflinks_" + strain + " tophat_" + strain + "/merged.bam -p 5")
-    print("Quantified expression in cufflinks.")
-    print("Finished writing analyses on strain " + strain + ".")
-
+    os.system("cufflinks -o cufflinks_" + strain + " tophat_" + strain + "/merged_sorted.bam -p 5")
+    print("Quantified expression in cufflinks.\nFinished writing analyses on strain " + strain + ".")
 UPEC_log.close()
 
-#normalize transcriptomes to each other
-#DO THIS WEDNESDAY
+#merge assembled transcriptomes MODIFY IF TOPHAT DECIDES TO WORK
+transcripts_paths = open("transcripts_paths.txt", "w") #transcripts path needs to be in a file
+transcripts_paths.write("cufflinks_HM27/transcripts.gtf\ncufflinks_HM46/transcripts.gtf\ncufflinks_HM65/transcripts.gtf\ncufflinks_HM69/transcripts.gtf")
+transcripts_paths.close()
+os.system("cuffmerge -p 5 -o merged transcripts_paths.txt")
 
-
+#normalize transcriptomes with cuffnorm
+'''
+Okay so I run cuffnorm with 
+ cuffnorm merged/merged.gtf tophat_HM27/merged_sorted.bam tophat_HM46/merged_sorted.bam tophat_HM65/merged_sorted.bam tophat_HM69/merged_sorted.bam
+But it gives "error: sort order of reads in BAMs must be the same"
+The reads are already sorted though, so I'm just going to report the individual ones
+'''
+for strain in strain_dict: #parsing output w/ highest gene expression first
+    fpkm = pd.read_csv("cufflinks_" + strain + "/genes.fpkm_tracking", delim_whitespace = True) #load in file
+    fpkm = fpkm.sort_values(by = ["FPKM"], ascending = False) #order by highest first
+    fpkm.to_csv(strain + "_normalized_sorted.tsv", sep = "\t", na_rep = "NA", index = False) #write to .tsv
+    print("Completed sorting expression by highest gene expression in " + strain + ".")
+print("Completed running all analyses. Have a nice day :)")
+   
